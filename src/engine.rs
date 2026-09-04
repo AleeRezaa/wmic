@@ -95,7 +95,16 @@ fn execute_query(query: &Query, globals: &GlobalOptions, backend: &dyn Backend) 
             }
         }
     }
-    let node = globals.nodes.first().map(String::as_str).unwrap_or("localhost");
+    let requested_node = globals.nodes.first().map(String::as_str).unwrap_or("localhost");
+    let local_name;
+    let node = if requested_node.eq_ignore_ascii_case("localhost") || requested_node == "." {
+        local_name = std::env::var("COMPUTERNAME")
+            .unwrap_or_else(|_| requested_node.into())
+            .to_ascii_lowercase();
+        &local_name
+    } else {
+        requested_node
+    };
     Execution::success(output::render(&all_records, &properties, &query.format, node))
 }
 
