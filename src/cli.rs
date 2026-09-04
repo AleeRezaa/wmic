@@ -69,7 +69,7 @@ pub enum Command {
     Help(HelpTopic),
     Context,
     Exit,
-    Query(Query),
+    Query(Box<Query>),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -253,7 +253,7 @@ where
     };
 
     let query = parse_query(source, rest)?;
-    Ok(Invocation { globals, command: Command::Query(query) })
+    Ok(Invocation { globals, command: Command::Query(Box::new(query)) })
 }
 
 fn topic_or_command(
@@ -606,9 +606,9 @@ mod tests {
 
     #[test]
     fn parses_mutating_verbs_without_executing_them() {
-        assert!(matches!(command(&["process", "where", "ProcessId=1", "delete"]).command, Command::Query(Query { verb: Verb::Delete, .. })));
-        assert!(matches!(command(&["service", "where", "Name='x'", "call", "StartService"]).command, Command::Query(Query { verb: Verb::Call { .. }, .. })));
-        assert!(matches!(command(&["environment", "create", "Name='x',VariableValue='y'"]).command, Command::Query(Query { verb: Verb::Create(_), .. })));
+        assert!(matches!(command(&["process", "where", "ProcessId=1", "delete"]).command, Command::Query(query) if matches!(query.verb, Verb::Delete)));
+        assert!(matches!(command(&["service", "where", "Name='x'", "call", "StartService"]).command, Command::Query(query) if matches!(query.verb, Verb::Call { .. })));
+        assert!(matches!(command(&["environment", "create", "Name='x',VariableValue='y'"]).command, Command::Query(query) if matches!(query.verb, Verb::Create(_))));
     }
 
     #[test]
